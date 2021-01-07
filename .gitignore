@@ -1,0 +1,5 @@
+*.tar
+*.gz
+/report/
+/result/
+.DS_Store

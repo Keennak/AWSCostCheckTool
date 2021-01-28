@@ -133,9 +133,13 @@ def get_flagged_resources(command, tag_dict):
             for k in d.get('result')['flaggedResources']:
                 region=k.get('region')
                 metadata=k.get('metadata')
-                id=metadata[1]
-                metadata.extend(tag_dict[region].get(id))
-                metadatas.append(metadata)
+                try:
+                    id=metadata[1]
+                    metadata.extend(tag_dict[region].get(id))
+                    metadatas.append(metadata)
+                except TypeError:
+                    metadata.append('None - This instance may be deleted.')
+                    metadatas.append(metadata)
 
     return metadatas
 

@@ -227,6 +227,14 @@ print_markdown(ec2_flagged_ips, 'Unassociated_Elastic_IP_Addresses')
 rds_flagged_instances = get_flagged_resources('RDS_Idle_DB_Instances', rds_instance_tags)
 print_markdown(rds_flagged_instances, 'RDS_Idle_DB_Instances')
 
+### test
+print('# RAW LIST')
+print('## EC2')
+print(ec2_flagged_instances)
+
+print('## EBS')
+print(ebs_flagged_volumes)
+
 
 
 

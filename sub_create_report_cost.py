@@ -6,6 +6,8 @@ import re
 from pathlib import Path
 import sys
 
+import pprint
+
 # common
 
 # ---------------------------------------------------------
@@ -231,20 +233,72 @@ print_markdown(ec2_flagged_ips, 'Unassociated_Elastic_IP_Addresses')
 rds_flagged_instances = get_flagged_resources('RDS_Idle_DB_Instances', rds_instance_tags)
 print_markdown(rds_flagged_instances, 'RDS_Idle_DB_Instances')
 
-### test
-print('# RAW LIST')
-print('## EC2')
-print(ec2_flagged_instances)
+print('# CSV Files')
+
+
+### EC2 NEW
+ec2_flagged_instances_new = []
+# new header
+ec2_flagged_instances_new.append(['Region/AZ', 'Instance ID', 'Instance Name', 'Instance Type', 'Estimated Monthly Savings', 'Day 1 CPU', 'Day 1 NW', 'Day 2 CPU', 'Day 2 NW', 'Day 3 CPU', 'Day 3 NW', 'Day 4 CPU', 'Day 4 NW', 'Day 5 CPU', 'Day 5 NW', 'Day 6 CPU', 'Day 6 NW', 'Day 7 CPU', 'Day 7 NW', 'Day 8 CPU', 'Day 8 NW', 'Day 9 CPU', 'Day 9 NW', 'Day 10 CPU', 'Day 10 NW', 'Day 11 CPU', 'Day 11 NW', 'Day 12 CPU', 'Day 12 NW', 'Day 13 CPU', 'Day 13 NW', 'Day 14 CPU', 'Day 14 NW', '14-Day Average CPU Utilization', '14-Day Average Network I/O', 'Number of Days Low Utilization', 'Tags', 'Service', 'Very Low'])
+# content
+for row in ec2_flagged_instances[1:]:
+    is_very_low = True
+    ec2_flagged_instances_new.append([])
+    for i in range(4):
+        ec2_flagged_instances_new[-1].append(row[i])
+    ec2_flagged_instances_new[-1].append(float(row[4][1:]))
+    for i in range(5,19):
+        cpu = ""
+        nw = ""
+        if row[i]!=None:
+            cpu = float(row[i].split('%')[0])
+            if cpu > 1.0:
+                is_very_low = False
+            nw = float(row[i].split()[1][:-2])
+        else:
+            is_very_low = False
+        ec2_flagged_instances_new[-1].append(cpu)
+        ec2_flagged_instances_new[-1].append(nw)
+    ec2_flagged_instances_new[-1].append(float(row[19][:-1]))
+    ec2_flagged_instances_new[-1].append(float(row[20][:-2]))
+    ec2_flagged_instances_new[-1].append(int(row[21][:-5]))
+    ec2_flagged_instances_new[-1].append(row[22])
+    service_tag = None
+    for kv in row[-1]:
+        if kv['Key'] == 'Service':
+            service_tag = kv['Value']
+    ec2_flagged_instances_new[-1].append(service_tag)
+    ec2_flagged_instances_new[-1].append(is_very_low)
+
+print('## new EC2')
+pprint.pprint(ec2_flagged_instances_new)
+
+
+### EBS
 
 print('## EBS')
-print(ebs_flagged_volumes)
+# print(ebs_flagged_volumes)
+
+### EBS NEW
+
+ebs_flagged_volumes_new = []
+# header
+ebs_flagged_volumes_new.append(ebs_flagged_volumes[0])
+ebs_flagged_volumes_new[0].append("Service")
+# data
+for row in ebs_flagged_volumes[1:]:
+    print(row)
+    ebs_flagged_volumes_new.append([])
+    for col in row:
+        ebs_flagged_volumes_new[-1].append(col)
+    ebs_flagged_volumes_new[-1][5] = float(ebs_flagged_volumes_new[-1][5][1:])
+    service_tag = None
+    for kv in row[-1]:
+        if kv['Key'] == 'Service':
+            service_tag = kv['Value']
+    ebs_flagged_volumes_new[-1].append(service_tag)
 
 
 
-
-
-
-
-
-
+pprint.pprint(ebs_flagged_volumes_new)
 

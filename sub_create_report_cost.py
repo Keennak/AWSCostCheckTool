@@ -5,7 +5,7 @@ import json
 import re
 from pathlib import Path
 import sys
-
+import argparse
 import pprint
 
 # common
@@ -33,7 +33,7 @@ p = Path(dir)
 
 
 # print header
-print('# Security Deep Assessment (COST）')
+### print('# Security Deep Assessment (COST）')
 
 # ---------------------------------------------
 # 共通関数
@@ -219,21 +219,21 @@ get_check_headers()
 
 # (2) create Low_Utilization_Amazon_EC2_Instances report
 ec2_flagged_instances = get_flagged_resources('Low_Utilization_Amazon_EC2_Instances', ec2_instance_tags)
-print_markdown(ec2_flagged_instances, 'Low_Utilization_Amazon_EC2_Instances')
+### print_markdown(ec2_flagged_instances, 'Low_Utilization_Amazon_EC2_Instances')
 
 # (3) create Underutilized_Amazon_EBS_Volumes report
 ebs_flagged_volumes = get_flagged_resources('Underutilized_Amazon_EBS_Volumes', ebs_volume_tags)
-print_markdown(ebs_flagged_volumes, 'Underutilized_Amazon_EBS_Volumes')
+### print_markdown(ebs_flagged_volumes, 'Underutilized_Amazon_EBS_Volumes')
 
 # (4) create Unassociated_Elastic_IP_Addresses report
 ec2_flagged_ips = get_flagged_resources('Unassociated_Elastic_IP_Addresses', elastic_ip_tags)
-print_markdown(ec2_flagged_ips, 'Unassociated_Elastic_IP_Addresses')
+### print_markdown(ec2_flagged_ips, 'Unassociated_Elastic_IP_Addresses')
 
 # (5) create RDS_Idle_DB_Instances report
 rds_flagged_instances = get_flagged_resources('RDS_Idle_DB_Instances', rds_instance_tags)
-print_markdown(rds_flagged_instances, 'RDS_Idle_DB_Instances')
+### print_markdown(rds_flagged_instances, 'RDS_Idle_DB_Instances')
 
-print('# CSV Files')
+### print('# CSV Files')
 
 # (6) create Low_Utilization_Amazon_EC2_Instances report 2
 # Extract Ultra Low Utilization EC2 Instance from ec2_flagged_instances dictionary
@@ -276,40 +276,74 @@ def get_ultralow_instances(t2):
                     service_tag = kv['Value']
         t1[-1].append(service_tag)
         t1[-1].append(is_very_low)
-
-    return t1
+    
+    # make a dict version
+    d1 = []
+    header = t1[0]
+    for row in t1[1:]:
+        r1 = {}
+        for i in range(len(header)):
+            r1[header[i]]=row[i]
+        d1.append(r1)
+    return d1
 
 # create dictionary
-ec2_ultralow_instances = []
-ec2_ultralow_instances = get_ultralow_instances(ec2_flagged_instances)
-pprint.pprint(ec2_ultralow_instances)
+# ec2_ultralow_instances = []
+# ec2_ultralow_instances = get_ultralow_instances(ec2_flagged_instances)
+#pprint.pprint(ec2_ultralow_instances)
+
+# (7) create Low_Utilization_Amazon_EBS report 2
+# Extract Low Utilization EBS Volumes from ebs_flagged_volumes dictionary
+#
+# Extraction condition
+#   The same as original trusted adivisor output
+#
 
 ### EBS
+#​## EBS NEW
+def get_low_volume(t2):
+    t1 = []
+    # header
+    t1.append(t2[0])
+    t1[0].append("Service")
+    # data
+    for row in t2[1:]:
+        #print(row)
+        t1.append([])
+        for col in row:
+            t1[-1].append(col)
+        t1[-1][5] = float(t1[-1][5][1:])
+        service_tag = "NO_SERVICE_TAG"
+        if(type(row[-1])is list):
+            for kv in row[-1]:
+                if kv['Key'] == 'Service':
+                    service_tag = kv['Value']
+        t1[-1].append(service_tag)
+    
+    d1 = []
+    header = t1[0]
+    for row in t1[1:]:
+        r1 = {}
+        for i in range(len(header)):
+            r1[header[i]]=row[i]
+        d1.append(r1)
+    return d1
 
-print('## EBS')
-# print(ebs_flagged_volumes)
-​
-### EBS NEW
-​
-ebs_flagged_volumes_new = []
-# header
-ebs_flagged_volumes_new.append(ebs_flagged_volumes[0])
-ebs_flagged_volumes_new[0].append("Service")
-# data
-for row in ebs_flagged_volumes[1:]:
-    print(row)
-    ebs_flagged_volumes_new.append([])
-    for col in row:
-        ebs_flagged_volumes_new[-1].append(col)
-    ebs_flagged_volumes_new[-1][5] = float(ebs_flagged_volumes_new[-1][5][1:])
-    service_tag = "NO_SERVICE_TAG"
-    if(type(row[-1])is list):
-        for kv in row[-1]:
-            if kv['Key'] == 'Service':
-                service_tag = kv['Value']
-    ebs_flagged_volumes_new[-1].append(service_tag)
+# pprint.pprint(ebs_flagged_volumes_new)
+
+# Main
+parser = argparse.ArgumentParser(description='Select Output file.')
+parser.add_argument("path")
+parser.add_argument("--output",help="sub_create_report_cost.py FILE_PATH --output [ec2all|ebsall|ec2ta|ebsta] (default ec2ta)",default="ec2ta")
+
+args = parser.parse_args()
 
 
-
-pprint.pprint(ebs_flagged_volumes_new)
-
+if args.output=="ec2ta":
+    print(get_ultralow_instances(ec2_flagged_instances))
+elif args.output=="ebsta":
+    print(get_low_volume(ebs_flagged_volumes))
+elif args.output=="ec2all":
+    print(ec2_instance_tags)
+elif args.output=="ebsall":
+    print(ebs_volume_tags)

@@ -35,5 +35,8 @@ INPUT_DIR=${1}
 
 # create COST report
 echo "create_report_cost started"
-${BIN_DIR}/sub_create_report_cost.py ${INPUT_DIR} >> ${RESULT_DIR}/cost_report.md 
-echo "create_report_cost created. Report: ${RESULT_DIR}/cost_report.md"
+${BIN_DIR}/sub_create_report_cost.py ${INPUT_DIR} --output ec2ta >> ${RESULT_DIR}/cost_report_ec2ta.json
+${BIN_DIR}/sub_create_report_cost.py ${INPUT_DIR} --output ebsta >> ${RESULT_DIR}/cost_report_ebsta.json
+${BIN_DIR}/sub_create_report_cost.py ${INPUT_DIR} --output ec2all >> ${RESULT_DIR}/cost_report_ec2all.json
+${BIN_DIR}/sub_create_report_cost.py ${INPUT_DIR} --output ebsall >> ${RESULT_DIR}/cost_report_ebsall.json
+echo "create_report_cost created. Report: ${RESULT_DIR}/*.json"

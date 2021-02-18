@@ -269,10 +269,11 @@ def get_ultralow_instances(t2):
         t1[-1].append(float(row[20][:-2]))
         t1[-1].append(int(row[21][:-5]))
         t1[-1].append(row[22])
-        service_tag = None
-        for kv in row[-1]:
-            if kv['Key'] == 'Service':
-                service_tag = kv['Value']
+        service_tag = "NO_SERVICE_TAG"
+        if(type(row[-1]) is list):
+            for kv in row[-1]:
+                if kv['Key'] == 'Service':
+                    service_tag = kv['Value']
         t1[-1].append(service_tag)
         t1[-1].append(is_very_low)
 
@@ -287,9 +288,9 @@ pprint.pprint(ec2_ultralow_instances)
 
 print('## EBS')
 # print(ebs_flagged_volumes)
-
+​
 ### EBS NEW
-
+​
 ebs_flagged_volumes_new = []
 # header
 ebs_flagged_volumes_new.append(ebs_flagged_volumes[0])
@@ -301,10 +302,11 @@ for row in ebs_flagged_volumes[1:]:
     for col in row:
         ebs_flagged_volumes_new[-1].append(col)
     ebs_flagged_volumes_new[-1][5] = float(ebs_flagged_volumes_new[-1][5][1:])
-    service_tag = None
-    for kv in row[-1]:
-        if kv['Key'] == 'Service':
-            service_tag = kv['Value']
+    service_tag = "NO_SERVICE_TAG"
+    if(type(row[-1])is list):
+        for kv in row[-1]:
+            if kv['Key'] == 'Service':
+                service_tag = kv['Value']
     ebs_flagged_volumes_new[-1].append(service_tag)
 
 

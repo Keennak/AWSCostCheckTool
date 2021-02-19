@@ -242,7 +242,7 @@ rds_flagged_instances = get_flagged_resources('RDS_Idle_DB_Instances', rds_insta
 #   CPU utils are equal or less than 1.0% for all days. 
 #   If there is a day with no data, that instance will not be extracted.
 #
-def get_ultralow_instances(t2):
+def get_ultralow_instances(t2,fmt="json"):
     t1 = []
     # new header
     t1.append(['Region/AZ', 'Instance ID', 'Instance Name', 'Instance Type', 'Estimated Monthly Savings', 'Day 1 CPU', 'Day 1 NW', 'Day 2 CPU', 'Day 2 NW', 'Day 3 CPU', 'Day 3 NW', 'Day 4 CPU', 'Day 4 NW', 'Day 5 CPU', 'Day 5 NW', 'Day 6 CPU', 'Day 6 NW', 'Day 7 CPU', 'Day 7 NW', 'Day 8 CPU', 'Day 8 NW', 'Day 9 CPU', 'Day 9 NW', 'Day 10 CPU', 'Day 10 NW', 'Day 11 CPU', 'Day 11 NW', 'Day 12 CPU', 'Day 12 NW', 'Day 13 CPU', 'Day 13 NW', 'Day 14 CPU', 'Day 14 NW', '14-Day Average CPU Utilization', '14-Day Average Network I/O', 'Number of Days Low Utilization', 'Tags', 'Service', 'Very Low'])
@@ -277,7 +277,13 @@ def get_ultralow_instances(t2):
         t1[-1].append(service_tag)
         t1[-1].append(is_very_low)
     
-    # make a dict version
+    # tsv version
+    tsv = []
+    for row in t1:
+        tsv.append('\t'.join(map(str,row)))
+    tsv = '\n'.join(tsv)
+
+    # dict version
     d1 = []
     header = t1[0]
     for row in t1[1:]:
@@ -285,7 +291,13 @@ def get_ultralow_instances(t2):
         for i in range(len(header)):
             r1[header[i]]=row[i]
         d1.append(r1)
-    return d1
+
+    if fmt=="json":
+        return d1
+    elif fmt=="tsv":
+        return tsv
+
+
 
 # create dictionary
 # ec2_ultralow_instances = []
@@ -301,7 +313,7 @@ def get_ultralow_instances(t2):
 
 ### EBS
 #​## EBS NEW
-def get_low_volume(t2):
+def get_low_volume(t2,fmt="json"):
     t1 = []
     # header
     t1.append(t2[0])
@@ -319,7 +331,14 @@ def get_low_volume(t2):
                 if kv['Key'] == 'Service':
                     service_tag = kv['Value']
         t1[-1].append(service_tag)
-    
+
+    # tsv version
+    tsv = []
+    for row in t1:
+        tsv.append('\t'.join(map(str,row)))
+    tsv = '\n'.join(tsv)
+
+    # dict version
     d1 = []
     header = t1[0]
     for row in t1[1:]:
@@ -327,7 +346,60 @@ def get_low_volume(t2):
         for i in range(len(header)):
             r1[header[i]]=row[i]
         d1.append(r1)
-    return d1
+
+    if fmt=="json":
+        return d1
+    elif fmt=="tsv":
+        return tsv
+
+def ec2_2_tsv(d):
+    t = []
+    t.append(['Region', 'Instance ID', 'Tags', 'Service'])
+    for region in d:
+        for instance_id in d[region]:
+            row = []
+            row.append(region)
+            row.append(instance_id)
+            row.append(d[region][instance_id])
+            service_tag = "NO_SERVICE_TAG"
+            if(type(row[-1]) is list):
+                if(type(row[-1][0]) is list):
+                    for kv in row[-1][0]:
+                        if kv['Key'] == 'Service':
+                            service_tag = kv['Value']
+            row.append(service_tag)
+            t.append(row)
+    tsv=[]
+    for row in t:
+        tsv.append('\t'.join(map(str,row)))
+    tsv = '\n'.join(tsv)
+    return tsv
+
+def ebs_2_tsv(d):
+    t = []
+    t.append(['Region', 'Volume ID', 'Tags', 'Service'])
+    for region in d:
+        for volume_id in d[region]:
+            row = []
+            row.append(region)
+            row.append(volume_id)
+            row.append(d[region][volume_id])
+            service_tag = "NO_SERVICE_TAG"
+            if(type(row[-1]) is list):
+                if(type(row[-1][0]) is list):
+                    for kv in row[-1][0]:
+                        if kv['Key'] == 'Service':
+                            service_tag = kv['Value']
+            row.append(service_tag)
+            t.append(row)
+    tsv = []
+    for row in t:
+        tsv.append('\t'.join(map(str,row)))
+    tsv = '\n'.join(tsv)
+    return tsv
+
+
+
 
 # pprint.pprint(ebs_flagged_volumes_new)
 
@@ -335,15 +407,27 @@ def get_low_volume(t2):
 parser = argparse.ArgumentParser(description='Select Output file.')
 parser.add_argument("path")
 parser.add_argument("--output",help="sub_create_report_cost.py FILE_PATH --output [ec2all|ebsall|ec2ta|ebsta] (default ec2ta)",default="ec2ta")
+parser.add_argument("--format",default="json")
 
 args = parser.parse_args()
 
 
-if args.output=="ec2ta":
-    print(get_ultralow_instances(ec2_flagged_instances))
-elif args.output=="ebsta":
-    print(get_low_volume(ebs_flagged_volumes))
-elif args.output=="ec2all":
-    print(ec2_instance_tags)
-elif args.output=="ebsall":
-    print(ebs_volume_tags)
+
+if args.format=="json":
+    if args.output=="ec2ta":
+        print(get_ultralow_instances(ec2_flagged_instances,fmt="json"))
+    elif args.output=="ebsta":
+        print(get_low_volume(ebs_flagged_volumes,fmt="json"))
+    elif args.output=="ec2all":
+        print(ec2_instance_tags)
+    elif args.output=="ebsall":
+        print(ebs_volume_tags)
+elif args.format=="tsv":
+    if args.output=="ec2ta":
+        print(get_ultralow_instances(ec2_flagged_instances,fmt="tsv"))
+    elif args.output=="ebsta":
+        print(get_low_volume(ebs_flagged_volumes,fmt="tsv"))
+    elif args.output=="ec2all":
+        print(ec2_2_tsv(ec2_instance_tags))
+    elif args.output=="ebsall":
+        print(ebs_2_tsv(ebs_volume_tags))
